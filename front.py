@@ -8,7 +8,6 @@ from neo4j.exceptions import ServiceUnavailable
 import logging
 
 # Placeholder for existing nodes so the order can select these to make connections
-# existing_nodes = ['Thing1', 'Thing2']
 existing_nodes = back.retrieve_all_nodes()
 
 # Select the type of node being added
@@ -30,14 +29,16 @@ connections = st.multiselect(
     existing_nodes, 
 )
 
-for connection in connections:
-    st.text_input(f'Type of relationship to {connection} : ', key=connection)
-
 # submit_args needs to replace 'connections' with a dictionary of connections and their relationship types
+connections_and_relations = {}
+for connection in connections:
+    relation_type = st.text_input(f'Type of relationship to {connection} : ', key=connection)
+    connections_and_relations[connection] = relation_type
 
+st.write(connections_and_relations)
 
 # Data to be sent to the back and used to create the node and its relationships
-submit_args = (node_type, name, connections)
+submit_args = (node_type, name, connections_and_relations)
 
 # Submit button to send the data back 
 submit = st.button(

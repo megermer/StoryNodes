@@ -73,7 +73,7 @@ def _create_and_return_relationship(tx, name1, name2, relationship_type):
         "MERGE (p1 { name: $name1 }) "
         "MERGE (p2 { name: $name2 }) "
         f"MERGE (p1)-[:{relationship_type}]-(p2) "
-        "RETURN p1, p2"
+        "RETURN p1, p2 "
     )
     result = tx.run(query, name1=name1, name2=name2)
     try:
@@ -117,9 +117,9 @@ def retrieve_all_nodes():
         return nodes
 
 # General method for creating a node of type Character, Place, or Thing
-def create_node(node_type, node_name, relationships):
-    # with GraphDatabase.driver(URI, auth=AUTH).session() as session:
-    with session:
+def create_node(node_type, node_name, relationships : dict):
+    with GraphDatabase.driver(URI, auth=AUTH).session() as session2:
+    # with session:
         if node_type == "Character":
             result = session.execute_write(_create_character, node_name)
         elif node_type == "Place":
@@ -129,8 +129,11 @@ def create_node(node_type, node_name, relationships):
         for row in result: 
             print("Created {node_type} : {row}".format(row=row, node_type=node_type))
         if len(relationships) > 0:
-            for i in range(len(relationships)):
-                create_relationship(node_name, relationships[i]) # NEED RELATIONSHIP TYPE VARIABLE AS THIRD PARAM
+            # for i in range(len(relationships)):
+            #     create_relationship(node_name, relationships[i]) # NEED RELATIONSHIP TYPE VARIABLE AS THIRD PARAM
+            for relation, relation_type in relationships.items():
+                create_relationship(node_name, relation, relation_type)
+        session2.close()
 
 # General method for deleting a node of type Character, Place, or Thing
 def delete_node(node_name):
@@ -141,12 +144,14 @@ def delete_node(node_name):
 
 # Create a new relationship between existing nodes
 def create_relationship(name1, name2, relationship_type):
-    with session:
+    # with session:
+    with GraphDatabase.driver(URI, auth=AUTH).session() as session2:
         result = session.execute_write(
             _create_and_return_relationship, name1, name2, relationship_type
         )
         for row in result:
             print("Created relationship {relationship_type} between: {p1}, {p2}".format(p1=row['p1'], p2=row['p2'], relationship_type=relationship_type))
+        session2.close()
 
 # Delete a relationship
 def delete_relationship(name1, name2, relationship_type):
