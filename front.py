@@ -7,34 +7,46 @@ from neo4j import GraphDatabase
 from neo4j.exceptions import ServiceUnavailable
 import logging
 
-def update_connections():
-    for i in range(len(connection)):
-        st.write(connection[i])
+# Placeholder for existing nodes so the order can select these to make connections
+# existing_nodes = ['Thing1', 'Thing2']
+existing_nodes = back.retrieve_all_nodes()
 
-elements = pd.Series(['Placeholder1', 'Placeholder2', 'Placeholder3'])
-connections = pd.Series([])
-
-element = st.selectbox(
-    'Add element',
+# Select the type of node being added
+node_type = st.selectbox(
+    'Select element type: ',
     ('Character', 'Place', 'Thing'),
-    key="element"
+    key="new_element"
 )
 
+# Type the name of the node being added
 name = st.text_input('Name', key="name")
+
+# Type the description of the onde being added
 description = st.text_area('Description', key="description")
 
-connection = st.multiselect(
+# Choose what *existing* nodes the new node is connected to
+connections = st.multiselect(
     'Is connected with: ',
-    elements, 
-    on_change = update_connections
+    existing_nodes, 
 )
 
+for connection in connections:
+    st.text_input(f'Type of relationship to {connection} : ', key=connection)
+
+# submit_args needs to replace 'connections' with a dictionary of connections and their relationship types
+
+
+# Data to be sent to the back and used to create the node and its relationships
+submit_args = (node_type, name, connections)
+
+# Submit button to send the data back 
 submit = st.button(
-                    label="submit", 
+                    label="Add Element", 
                     on_click=back.create_node, 
-                    # args=(st.session_state.name,),
-                    args=(element, name)
+                    args=submit_args
                     )
 
+# Test/checker for checking the arguments
+st.write(submit_args)
 
 

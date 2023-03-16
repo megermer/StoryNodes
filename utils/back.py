@@ -21,6 +21,14 @@ def _find_and_return_node(tx, node_name):
     result = tx.run(query, node_name=node_name)
     return [row["name"] for row in result]
 
+def _find_and_retrieve_all_nodes(tx):
+    query = (
+        "MATCH (n) "
+        "RETURN n.name AS name"
+    )
+    result = tx.run(query)
+    return [row["name"] for row in result]
+
 # Helper method to create a CHARACTER
 def _create_character(tx, character_name):
     query = (
@@ -87,24 +95,42 @@ def _delete_relationship(tx, name1, name2, relationship_type):
 
 # General method for finding an element
 def find_node(node_name):
-    with GraphDatabase.driver(URI, auth=AUTH).session() as session:
+    with session:
         result = session.execute_read(
             _find_and_return_node, node_name
         )
         for row in result:
             print("Found node : {row}".format(row=row))
 
+# General method for retrieving all nodes
+def retrieve_all_nodes():
+    nodes = []
+    # Have to create new session because the original one closes after state refreshes
+    with GraphDatabase.driver(URI, auth=AUTH).session() as session2:
+        result = session2.execute_read(
+            _find_and_retrieve_all_nodes
+        )
+        for row in result:
+            nodes.append(row)
+            print("Found node : {row}".format(row=row))
+        session2.close()
+        return nodes
+
 # General method for creating a node of type Character, Place, or Thing
-def create_node(node_type, node_name):
-    with GraphDatabase.driver(URI, auth=AUTH).session() as session:
+def create_node(node_type, node_name, relationships):
+    # with GraphDatabase.driver(URI, auth=AUTH).session() as session:
+    with session:
         if node_type == "Character":
             result = session.execute_write(_create_character, node_name)
-        if node_type == "Place":
+        elif node_type == "Place":
             result = session.execute_write(_create_place, node_name)
-        if node_type == "Thing":
+        elif node_type == "Thing":
             result = session.execute_write(_create_thing, node_name)
         for row in result: 
             print("Created {node_type} : {row}".format(row=row, node_type=node_type))
+        if len(relationships) > 0:
+            for i in range(len(relationships)):
+                create_relationship(node_name, relationships[i]) # NEED RELATIONSHIP TYPE VARIABLE AS THIRD PARAM
 
 # General method for deleting a node of type Character, Place, or Thing
 def delete_node(node_name):
@@ -115,7 +141,7 @@ def delete_node(node_name):
 
 # Create a new relationship between existing nodes
 def create_relationship(name1, name2, relationship_type):
-    with GraphDatabase.driver(URI, auth=AUTH).session() as session:
+    with session:
         result = session.execute_write(
             _create_and_return_relationship, name1, name2, relationship_type
         )
@@ -124,7 +150,7 @@ def create_relationship(name1, name2, relationship_type):
 
 # Delete a relationship
 def delete_relationship(name1, name2, relationship_type):
-    with GraphDatabase.driver(URI, auth=AUTH).session() as session:
+    with session:
         result = session.execute_write(
             _delete_relationship, name1, name2, relationship_type
         )
@@ -132,7 +158,7 @@ def delete_relationship(name1, name2, relationship_type):
 
 
     
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # uri = "neo4j+s://0b4d88a8.databases.neo4j.io"
     # user = "neo4j"
     # password = "qE4ZrS-xtJ2QzwN_4OSXfXl3Gi9uwvGJqp4UI95xReE"
@@ -144,11 +170,11 @@ if __name__ == "__main__":
     # name = input("Enter the name of the node: ")
     # create_node(node, name)
     
-    node = input("Enter a node to delete: ")
-    try:
-        delete_node(node)
-    finally:
-        session.close()
+    # node = input("Enter a node to delete: ")
+    # try:
+    #     delete_node(node)
+    # finally:
+    #     session.close()
 
     # p1 = input("Enter the first person: ")
     # p2 = input("Enter the second person: ")
@@ -159,8 +185,10 @@ if __name__ == "__main__":
     # p2 = input("Enter the second person: ")
     # r = input("Enter the relationship type: ")
     # delete_relationship(p1, p2, r)
+
+    # retrieve_all_nodes()
     
-    driver.close()
+    # driver.close()
 
 
 # NEO4j Desktop application key eyJhbGciOiJQUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Ii4rQC4rIiwibWl4cGFuZWxJZCI6ImF1dGgwfDYzZGQ4YTkxNWQ0ZmI4NTZkMmYxNWQ5NyIsIm1peHBhbmVsUHJvamVjdElkIjoiNGJmYjI0MTRhYjk3M2M3NDFiNmYwNjdiZjA2ZDU1NzUiLCJvcmciOiIuKiIsInB1YiI6Im5lbzRqLmNvbSIsInJlZyI6IiAiLCJzdWIiOiJuZW80ai1kZXNrdG9wIiwiZXhwIjoxNzA4NzMxNDE4LCJ2ZXIiOiIqIiwiaXNzIjoibmVvNGouY29tIiwibmJmIjoxNjc3MTk1NDE4LCJpYXQiOjE2NzcxOTU0MTgsImp0aSI6IjM3MGlLa1BXYyJ9.gs_iwai_YPNCoCMVsle-qnBFkNswAa6KlMrrCONnYYItOktMWsZBzQp7FYQA6tnbdvyt78Nfi8iI9Uk8g6INXZvxgpBy3O4pfeUIx4ee4xv5vmDssuTdgGHbmQoWBUvlfVi4CTHhE23Jm70pG5QMOG82H5Yty6AbgcO01HgCQ6AZg8JrBXCUETxOHbumi0NfYlNz2KdFMEEK0v6TMuQxQnu04KF0tsFrhgTuKVPp4S07wYX8YrASROcm_rrTDSwgruddBZPOCLkryQyeDl05xn3yEdfRmJwN8k33u2Fbo3FlH7Y6wcZ0et4OlPXY307lXYP1f8tZ8k5zSgL_aLOc8A
