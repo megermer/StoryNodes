@@ -21,10 +21,30 @@ def _find_and_return_node(tx, node_name):
     result = tx.run(query, node_name=node_name)
     return [row["name"] for row in result]
 
-def _find_and_retrieve_all_nodes(tx):
+# Helper method for retrieving all node names
+def _find_and_retrieve_all_node_names(tx):
     query = (
         "MATCH (n) "
         "RETURN n.name AS name"
+    )
+    result = tx.run(query)
+    return [row["name"] for row in result]
+
+# Helper method for retrieving all node names of specific label
+def _find_and_retrieve_all_nodes_of_label(tx, label):
+    query = (
+        f"MATCH (n: {label}) "
+        "RETURN n.name AS name "
+    ) 
+    result = tx.run(query)
+    return [row["name"] for row in result]
+
+# Helper method for retrieving all node descriptions
+def _find_and_retrieve_all_node_descriptions(tx, node_name):
+    query = (
+        "MATCH (n) "
+        "WHERE n.name = $node_name "
+        "RETURN n.name AS name "
     )
     result = tx.run(query)
     return [row["name"] for row in result]
@@ -103,18 +123,36 @@ def find_node(node_name):
             print("Found node : {row}".format(row=row))
 
 # General method for retrieving all nodes
-def retrieve_all_nodes():
-    nodes = []
+def retrieve_all_node_names():
+    node_names = []
     # Have to create new session because the original one closes after state refreshes
     with GraphDatabase.driver(URI, auth=AUTH).session() as session2:
         result = session2.execute_read(
-            _find_and_retrieve_all_nodes
+            _find_and_retrieve_all_node_names
         )
         for row in result:
-            nodes.append(row)
+            node_names.append(row)
             print("Found node : {row}".format(row=row))
         session2.close()
-        return nodes
+        return node_names
+
+def retrieve_all_nodes_of_label(label):
+    node_names = []
+    with GraphDatabase.driver(URI, auth=AUTH).session() as session2:
+        result = session2.execute_read(
+            _find_and_retrieve_all_nodes_of_label, label
+        )
+        for row in result:
+            node_names.append(row)
+            print("Found node : {row}".format(row=row))
+        session2.close()
+        return node_names
+
+# General method for retrieving all nodes (will need 3 helper methods for getting names, types, and descriptions)
+# MIGHT NOT NEED THIS
+def retrieve_all_nodes():
+    pass
+    
 
 # General method for creating a node of type Character, Place, or Thing
 def create_node(node_type, node_name, relationships : dict):
@@ -163,7 +201,7 @@ def delete_relationship(name1, name2, relationship_type):
 
 
     
-# if __name__ == "__main__":
+if __name__ == "__main__":
     # uri = "neo4j+s://0b4d88a8.databases.neo4j.io"
     # user = "neo4j"
     # password = "qE4ZrS-xtJ2QzwN_4OSXfXl3Gi9uwvGJqp4UI95xReE"
@@ -191,9 +229,12 @@ def delete_relationship(name1, name2, relationship_type):
     # r = input("Enter the relationship type: ")
     # delete_relationship(p1, p2, r)
 
-    # retrieve_all_nodes()
+    # nodes = retrieve_all_nodes()
+    # for node in nodes:
+    #     print(node['name'])
     
-    # driver.close()
+    retrieve_all_nodes_of_label("Character")
+    driver.close()
 
 
 # NEO4j Desktop application key eyJhbGciOiJQUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Ii4rQC4rIiwibWl4cGFuZWxJZCI6ImF1dGgwfDYzZGQ4YTkxNWQ0ZmI4NTZkMmYxNWQ5NyIsIm1peHBhbmVsUHJvamVjdElkIjoiNGJmYjI0MTRhYjk3M2M3NDFiNmYwNjdiZjA2ZDU1NzUiLCJvcmciOiIuKiIsInB1YiI6Im5lbzRqLmNvbSIsInJlZyI6IiAiLCJzdWIiOiJuZW80ai1kZXNrdG9wIiwiZXhwIjoxNzA4NzMxNDE4LCJ2ZXIiOiIqIiwiaXNzIjoibmVvNGouY29tIiwibmJmIjoxNjc3MTk1NDE4LCJpYXQiOjE2NzcxOTU0MTgsImp0aSI6IjM3MGlLa1BXYyJ9.gs_iwai_YPNCoCMVsle-qnBFkNswAa6KlMrrCONnYYItOktMWsZBzQp7FYQA6tnbdvyt78Nfi8iI9Uk8g6INXZvxgpBy3O4pfeUIx4ee4xv5vmDssuTdgGHbmQoWBUvlfVi4CTHhE23Jm70pG5QMOG82H5Yty6AbgcO01HgCQ6AZg8JrBXCUETxOHbumi0NfYlNz2KdFMEEK0v6TMuQxQnu04KF0tsFrhgTuKVPp4S07wYX8YrASROcm_rrTDSwgruddBZPOCLkryQyeDl05xn3yEdfRmJwN8k33u2Fbo3FlH7Y6wcZ0et4OlPXY307lXYP1f8tZ8k5zSgL_aLOc8A

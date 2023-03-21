@@ -10,7 +10,7 @@ import logging
 import streamlit.components.v1 as components
 
 # Placeholder for existing nodes so the order can select these to make connections
-existing_nodes = back.retrieve_all_nodes()
+existing_node_names = back.retrieve_all_node_names()
 
 # Select the type of node being added
 node_type = st.selectbox(
@@ -28,7 +28,7 @@ description = st.text_area('Description', key="description")
 # Choose what *existing* nodes the new node is connected to
 connections = st.multiselect(
     'Is connected with: ',
-    existing_nodes, 
+    existing_node_names, 
 )
 
 # submit_args needs to replace 'connections' with a dictionary of connections and their relationship types
@@ -52,12 +52,38 @@ submit = st.button(
 # Test/checker for checking the arguments
 st.write(submit_args)
 
+###################
+### Pyvis graph ###
+###################
+
+# Creates Network class of specified size and styling
 net = Network(height='465px', bgcolor='#222222', font_color='white')
 
-net.add_node(1, label="Node 1") # node id = 1 and label = Node 1
-net.add_node(2) # node id and label = 2
+# Test code##############################
+# net.add_node(1, label="Node 1") # node id = 1 and label = Node 1
+# net.add_node(2) # node id and label = 2
+# net.show("test.html")
+############################################
+
+# net.add_nodes(existing_node_names)
+
+# Retrieves all of the three categories of nodes, needed for coloring issues
+characters = back.retrieve_all_nodes_of_label("Character")
+places = back.retrieve_all_nodes_of_label("Place")
+things = back.retrieve_all_nodes_of_label("Thing")
+
+for character in characters:
+    net.add_node(character, color = "blue")
+
+for place in places:
+    net.add_node(place, color = "red")
+
+for thing in things:
+    net.add_node(thing, color = "yellow")
+
 net.show("test.html")
 
+# CRUCIAL for displaying graph on server (try) and locally (except)
 try:
    path = './tmp'
    net.save_graph(f'{path}/pyvis_graph.html')
