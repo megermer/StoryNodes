@@ -39,7 +39,7 @@ def _find_and_retrieve_all_nodes_of_label(tx, label):
     result = tx.run(query)
     return [row["name"] for row in result]
 
-# Helper method for retrieving all node descriptions
+# Helper method for retrieving all node descriptions (for future on-hover feature)
 def _find_and_retrieve_all_node_descriptions(tx, node_name):
     query = (
         "MATCH (n) "
@@ -48,6 +48,20 @@ def _find_and_retrieve_all_node_descriptions(tx, node_name):
     )
     result = tx.run(query)
     return [row["name"] for row in result]
+
+def _find_and_retrieve_all_relationships(tx, nodes : list):
+    relationships = []
+    for node_name in nodes:
+        query = (
+            "MATCH (n { name: $node_name})-[r]->(m) "
+            "RETURN type(r) AS relationship, m.name AS endpoint "
+        )
+        result = tx.run(query, node_name=node_name)
+        for row in result:
+            if len(row["relationship"]) > 0:
+                relationships.append([node_name, row["relationship"], row["endpoint"]])
+    return relationships
+
 
 # Helper method to create a CHARACTER
 def _create_character(tx, character_name):
@@ -152,7 +166,19 @@ def retrieve_all_nodes_of_label(label):
 # MIGHT NOT NEED THIS
 def retrieve_all_nodes():
     pass
-    
+
+def retrieve_all_relationships():
+    nodes = retrieve_all_node_names()
+    relationships = []
+    with GraphDatabase.driver(URI, auth=AUTH).session() as session2:
+        result = session2.execute_read(
+            _find_and_retrieve_all_relationships, nodes
+        )
+        for row in result:
+            relationships.append(row)
+            print(f"Found relationship : {row}")
+        session2.close()
+        return relationships
 
 # General method for creating a node of type Character, Place, or Thing
 def create_node(node_type, node_name, relationships : dict):
@@ -233,7 +259,11 @@ if __name__ == "__main__":
     # for node in nodes:
     #     print(node['name'])
     
-    retrieve_all_nodes_of_label("Character")
+    # retrieve_all_nodes_of_label("Character")
+
+    # retrieve_all_node_names()
+    retrieve_all_relationships()
+
     driver.close()
 
 
