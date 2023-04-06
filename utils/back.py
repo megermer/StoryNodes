@@ -70,7 +70,6 @@ def _create_character(tx, character_name):
         "RETURN p "
     )
     result = tx.run(query, character_name=character_name)
-    # return [row["name"] for row in result]
     return [row["p"]["name"] for row in result]
 
 # Helper method to create a PLACE
@@ -183,7 +182,6 @@ def retrieve_all_relationships():
 # General method for creating a node of type Character, Place, or Thing
 def create_node(node_type, node_name, relationships : dict):
     with GraphDatabase.driver(URI, auth=AUTH).session() as session2:
-    # with session:
         if node_type == "Character":
             result = session.execute_write(_create_character, node_name)
         elif node_type == "Place":
@@ -193,8 +191,6 @@ def create_node(node_type, node_name, relationships : dict):
         for row in result: 
             print("Created {node_type} : {row}".format(row=row, node_type=node_type))
         if len(relationships) > 0:
-            # for i in range(len(relationships)):
-            #     create_relationship(node_name, relationships[i]) # NEED RELATIONSHIP TYPE VARIABLE AS THIRD PARAM
             for relation, relation_type in relationships.items():
                 create_relationship(node_name, relation, relation_type)
         session2.close()
@@ -208,13 +204,13 @@ def delete_node(node_name):
 
 # Create a new relationship between existing nodes
 def create_relationship(name1, name2, relationship_type):
-    # with session:
     with GraphDatabase.driver(URI, auth=AUTH).session() as session2:
         result = session.execute_write(
             _create_and_return_relationship, name1, name2, relationship_type
         )
         for row in result:
-            print("Created relationship {relationship_type} between: {p1}, {p2}".format(p1=row['p1'], p2=row['p2'], relationship_type=relationship_type))
+            print("Created relationship {relationship_type} between: {p1}, {p2}"
+                  .format(p1=row['p1'], p2=row['p2'], relationship_type=relationship_type))
         session2.close()
 
 # Delete a relationship

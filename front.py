@@ -37,7 +37,7 @@ for connection in connections:
     relation_type = st.text_input(f'Type of relationship to {connection} : ', key=connection)
     connections_and_relations[connection] = relation_type
 
-st.write(connections_and_relations)
+# st.write(connections_and_relations)
 
 # Data to be sent to the back and used to create the node and its relationships
 submit_args = (node_type, name, connections_and_relations)
@@ -50,7 +50,7 @@ submit = st.button(
                     )
 
 # Test/checker for checking the arguments
-st.write(submit_args)
+# st.write(submit_args)
 
 ###################
 ### Pyvis graph ###
