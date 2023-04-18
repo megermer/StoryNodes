@@ -30,14 +30,21 @@ def _find_and_retrieve_all_node_names(tx):
     result = tx.run(query)
     return [row["name"] for row in result]
 
-# Helper method for retrieving all node names of specific label
+# Helper method for retrieving all node names of specific label with their descriptions (dict format)
 def _find_and_retrieve_all_nodes_of_label(tx, label):
+    nodes = {}
     query = (
         f"MATCH (n: {label}) "
-        "RETURN n.name AS name "
+        "RETURN n "
     ) 
     result = tx.run(query)
-    return [row["name"] for row in result]
+    # return [row["name"] for row in result]
+    for row in result:
+        name = row["n"]["name"]
+        description = row["n"]["description"]
+        nodes[name] = description 
+    return nodes
+
 
 # Helper method for retrieving all node descriptions (for future on-hover feature)
 def _find_and_retrieve_all_node_descriptions(tx, node_name):
@@ -62,32 +69,31 @@ def _find_and_retrieve_all_relationships(tx, nodes : list):
                 relationships.append([node_name, row["relationship"], row["endpoint"]])
     return relationships
 
-
 # Helper method to create a CHARACTER
-def _create_character(tx, character_name):
+def _create_character(tx, character_name, description):
     query = (
-        "MERGE (p:Character { name: $character_name }) "
+        "MERGE (p:Character { name: $character_name, description: $description }) "
         "RETURN p "
     )
-    result = tx.run(query, character_name=character_name)
+    result = tx.run(query, character_name=character_name, description=description)
     return [row["p"]["name"] for row in result]
 
 # Helper method to create a PLACE
-def _create_place(tx, place_name):
+def _create_place(tx, place_name, description):
     query = (
-        "MERGE (p:Place { name: $place_name }) "
+        "MERGE (p:Place { name: $place_name, description: $description }) "
         "RETURN p "
     )
-    result = tx.run(query, place_name=place_name)
+    result = tx.run(query, place_name=place_name, description=description)
     return [row["p"]["name"] for row in result]
 
 # Helper method to create a THING
-def _create_thing(tx, thing_name):
+def _create_thing(tx, thing_name, description):
     query = (
-        "MERGE (p:Thing { name: $thing_name }) "
+        "MERGE (p:Thing { name: $thing_name, description: $description }) "
         "RETURN p "
     )
-    result = tx.run(query, thing_name=thing_name)
+    result = tx.run(query, thing_name=thing_name, description=description)
     return [row["p"]["name"] for row in result]
 
 # Helper method for deleting nodes of types Character, Place, Thing
@@ -145,19 +151,22 @@ def retrieve_all_node_names():
         )
         for row in result:
             node_names.append(row)
-            print("Found node : {row}".format(row=row))
+            print(" Found node : {row}".format(row=row))
         session2.close()
         return node_names
 
 def retrieve_all_nodes_of_label(label):
-    node_names = []
+    # node_names = []
+    node_names = {}
     with GraphDatabase.driver(URI, auth=AUTH).session() as session2:
         result = session2.execute_read(
             _find_and_retrieve_all_nodes_of_label, label
         )
-        for row in result:
-            node_names.append(row)
-            print("Found node : {row}".format(row=row))
+        # for row in result:
+        #     node_names.append(row)
+            # print("Found node : {row}".format(row=row))
+        for key, value in result.items():
+            node_names[key] = value
         session2.close()
         return node_names
 
@@ -180,14 +189,14 @@ def retrieve_all_relationships():
         return relationships
 
 # General method for creating a node of type Character, Place, or Thing
-def create_node(node_type, node_name, relationships : dict):
+def create_node(node_type, node_name, description, relationships : dict):
     with GraphDatabase.driver(URI, auth=AUTH).session() as session2:
         if node_type == "Character":
-            result = session.execute_write(_create_character, node_name)
+            result = session.execute_write(_create_character, node_name, description)
         elif node_type == "Place":
-            result = session.execute_write(_create_place, node_name)
+            result = session.execute_write(_create_place, node_name, description)
         elif node_type == "Thing":
-            result = session.execute_write(_create_thing, node_name)
+            result = session.execute_write(_create_thing, node_name, description)
         for row in result: 
             print("Created {node_type} : {row}".format(row=row, node_type=node_type))
         if len(relationships) > 0:
@@ -231,6 +240,8 @@ if __name__ == "__main__":
 
     # find_node("Lucy")
 
+    create_node("Character", "John Doe", "lorem ipsum", {})
+
     # node = input("Enter a node type to create: ")
     # name = input("Enter the name of the node: ")
     # create_node(node, name)
@@ -258,7 +269,7 @@ if __name__ == "__main__":
     # retrieve_all_nodes_of_label("Character")
 
     # retrieve_all_node_names()
-    retrieve_all_relationships()
+    # retrieve_all_relationships()
 
     driver.close()
 
