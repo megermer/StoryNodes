@@ -1,8 +1,14 @@
-Before running, the following dependencies need to be installed either via Pip or in a virtual environment: 
-- Streamlit
-- PyVis
+Required dependencies:
+- Streamlit `pip install streamlit`
+- PyVis `pip install pyvis`
+- Neo4J `pip install neo4j`
 
-As this is version 1 of the prototype, there are some limitations to this application. Please read before running:
+To run the app:
+- Once you've installed the required dependencies or accessed them with a virtual environment, open the application and open a new terminal.
+- Type `streamlit run front.py` 
+- The application should open in your default browser
+
+Limitations:
 - You CANNOT update an existing node after it is submitted. Re-entering the same node name and attempting to update the information will duplicate the existing relationships associated with the node.
 - The functionality to delete a node does not exist.
 - You MUST specify a relationship type if you are adding a relationship. Failure to do so may result in the app crashing.
@@ -12,3 +18,5 @@ As this is version 1 of the prototype, there are some limitations to this applic
 URI and AUTH credentials:
 URI = "neo4j+s://0b4d88a8.databases.neo4j.io"
 AUTH = ("neo4j", "qE4ZrS-xtJ2QzwN_4OSXfXl3Gi9uwvGJqp4UI95xReE")
+
+
